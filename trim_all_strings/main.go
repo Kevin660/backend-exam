@@ -3,17 +3,36 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
+	"strings"
 )
 
-func TrimAllStrings(a any) {}
+type Person struct {
+	Name string
+	Age  int
+	Next *Person
+}
+
+func TrimAllStrings(a *Person) {
+	p := a
+	visited := make(map[uintptr]bool)
+	for {
+		if p == nil {
+			break
+		}
+
+		ptr := reflect.ValueOf(p).Pointer()
+		if visited[ptr] {
+			break
+		}
+
+		visited[ptr] = true
+		p.Name = strings.TrimSpace(p.Name)
+		p = p.Next
+	}
+}
 
 func main() {
-	type Person struct {
-		Name string
-		Age  int
-		Next *Person
-	}
-
 	a := &Person{
 		Name: " name ",
 		Age:  20,
@@ -27,7 +46,7 @@ func main() {
 		},
 	}
 
-	TrimAllStrings(&a)
+	TrimAllStrings(a)
 
 	m, _ := json.Marshal(a)
 
@@ -35,7 +54,6 @@ func main() {
 
 	a.Next = a
 
-	TrimAllStrings(&a)
-
+	TrimAllStrings(a)
 	fmt.Println(a.Next.Next.Name == "name")
 }
